@@ -9,6 +9,9 @@ from quopri import decodestring
 
 
 # "Безымянный" сиглтон
+from patterns.behav_pattern import Subject
+
+
 class UnnamedSingleForLogger(type):
     _instances = {}
     def __call__(cls, *args, **kwargs):
@@ -80,13 +83,22 @@ class ServicePrototype:
         return deepcopy(self)
 
 # вид оборудования
-class Service(ServicePrototype):
+class Service(ServicePrototype, Subject):
 
     def __init__(self, name, equipment):
         self.name = name
         self.equipment = equipment
         self.equipment.services.append(self)
+        self.customers = []
+        super().__init__()
 
+    def __getitem__(self, item):
+        return self.customers[item]
+
+    def add_customer(self, customer: Customer):
+        self.customers.append(customer)
+        customer.services.append(self)
+        self.notify()
 
 # Удаленное тех.сопровождение (диагностика, программирование, администрирование и др.)
 class RemoteTechnicalSupport(Service):

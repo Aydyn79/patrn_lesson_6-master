@@ -1,10 +1,12 @@
 from frame.templator import render
-from patterns.behav_pattern import ListView, CreateView, BaseSerializer
+from patterns.behav_pattern import ListView, CreateView, BaseSerializer, EmailNotifier, SmsNotifier
 from patterns.create_pattern import Engine,Logger
 from patterns.struct_pattern import Debug, AppRoute
 
 log = Logger()
 site = Engine()
+email_notifier = EmailNotifier()
+sms_notifier = SmsNotifier()
 
 routes = {}
 
@@ -54,11 +56,12 @@ class CreateService:
             name = data['name']
             name = site.decode_value(name)
             log.log(name)
-
             equipment = None
             if self.equipment_id != -1:
                 equipment = site.find_equipment_by_id(int(self.equipment_id))
                 service = site.create_service('remote_support', name, equipment)
+                service.observers.append(email_notifier)
+                service.observers.append(sms_notifier)
                 site.services.append(service)
 
             return '200 OK', render('service_list.html',
@@ -152,10 +155,11 @@ class CustomerListView(ListView):
 class CustomerCreateView(CreateView):
     template_name = 'create_customer.html'
 
-    def create_customer(self, data: dict):
+    def create_obj(self, data):
         name = data['name']
         name = site.decode_value(name)
         new_obj = site.create_user('customer', name)
+        print(new_obj.name)
         site.customers.append(new_obj)
 
 
